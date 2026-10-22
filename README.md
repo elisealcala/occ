@@ -2,6 +2,18 @@
 
 A local laboratory for **optimistic concurrency control**: two independent React rich-text editors, a Next.js server, and a real SQLite database. Toggle protection, pause polling, delay requests, and watch saves compete.
 
+## Full-stack showcase
+
+When two editors save the same document, a stale request can overwrite someone else's work. This project makes that failure visible, then demonstrates how version checks protect persisted content while the interface preserves the losing draft.
+
+- **Frontend:** independent rich-text editors, explicit save states, conflict recovery, and a timeline connecting user actions to server outcomes.
+- **Backend:** validated HTTP requests, atomic revision checks, retry receipts that prevent duplicate commits, and conditional checkpoint restores.
+- **Engineering evidence:** real SQLite race tests, deterministic client-state tests, and browser workflows covering the complete request path.
+
+**Current status:** a working local demo. The public deployment and portfolio presentation work are tracked in the [portfolio roadmap](docs/portfolio-roadmap.md), with priorities, completion criteria, and the latest local verification baseline.
+
+Start with [your first concurrency experiment](#your-first-concurrency-experiment), explore [how writes work](#how-writes-work), or review the [verification setup](#verification).
+
 ## Quick start
 
 Requirements: **Node.js 22.22 or later** and **pnpm 10.9 or later**. If pnpm is not installed, install the version pinned by this project:
@@ -127,13 +139,32 @@ Two simplifications are intentional: **serialize each client's writes**, and **c
 
 ## Verification
 
+### Formatting and linting
+
+[Biome](https://biomejs.dev/) owns formatting, import ordering, and general lint rules. ESLint keeps Next.js, React Hooks, and React Compiler checks. Hook dependency analysis is enabled in ESLint rather than duplicated in Biome.
+
+The global stylesheet disables the descending-specificity rule because component selectors target separate subtrees. Reduced-motion overrides have individual, documented exceptions for `!important`; all other recommended CSS rules remain enabled.
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm format` | Format supported source/config files and organize imports. |
+| `pnpm format:check` | Check formatting and import ordering without editing files. |
+| `pnpm lint` | Run Biome and Next.js ESLint rules; warnings fail the check. |
+| `pnpm lint:fix` | Apply safe lint fixes; review changes afterward. |
+| `pnpm check` | Check formatting, imports, both linters, and TypeScript without editing files. |
+
+Use two-space indentation, single quotes in JavaScript/TypeScript, and a 100-column formatter target. Biome follows `.gitignore` and explicitly excludes the generated Next.js declaration file and pnpm lockfile. VS Code workspace settings enable formatting and import organization on save when the recommended Biome extension is installed.
+
+The Code quality workflow runs `pnpm check`, unit tests, and the production build on pushes and pull requests. Browser tests remain available through `pnpm test:e2e`.
+
+### Regression checks
+
 Install Chromium once for the browser suite, then run the checks:
 
 ```sh
 pnpm exec playwright install chromium
+pnpm check
 pnpm test
-pnpm typecheck
-pnpm lint
 pnpm build
 pnpm test:e2e
 ```
@@ -141,6 +172,18 @@ pnpm test:e2e
 Database tests exercise actual SQLite connections and transaction behavior. Controller tests use deterministic transports and timers to test races. Browser tests exercise rich text and real HTTP requests using an isolated local database. Unit and browser runs do not need external services.
 
 Production builds explicitly use Next.js's Webpack builder for compatibility with restricted local execution environments. Development uses the default Next.js builder.
+
+## Code organization
+
+- `src/app/`: Next.js routes, page metadata, and global styles.
+- `src/components/sandbox.tsx`: experiment loading, reset orchestration, and the page entry point.
+- `src/components/sandbox/`: focused components for the page shell, experiment controls, server state, event timeline, checkpoints, guided scenarios, and architecture notes. `experiment-session.tsx` connects them to a shared experiment.
+- `src/components/client-panel.tsx`, `rich-editor.tsx`, and `controls.tsx`: client editing UI and reusable controls.
+- `src/lib/`: shared contracts, HTTP client, experiment persistence, scenarios, and the framework-independent client state machine.
+- `src/server/`: SQLite transactions and HTTP request handling.
+- `tests/unit/` and `tests/e2e/`: concurrency regressions and browser workflows.
+
+Keep presentation in components, client save behavior in the state machine, and persistence guarantees in the server repository. Extract a component when it represents a distinct panel or responsibility, rather than growing the page into a single render function.
 
 ## Run the production build locally
 

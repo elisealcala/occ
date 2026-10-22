@@ -8,9 +8,14 @@
     "build": "next build --webpack",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "biome lint . --error-on-warnings && pnpm lint:next",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "lint:next": "eslint . --max-warnings 0",
+    "lint:fix": "biome lint --write . && eslint . --fix",
+    "format": "biome check --write --linter-enabled=false .",
+    "format:check": "biome check --linter-enabled=false --error-on-warnings .",
+    "check": "biome check . --error-on-warnings && pnpm lint:next && pnpm typecheck"
   },
   "dependencies": {
     "@tiptap/pm": "^3.27.1",
@@ -24,6 +29,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.13",
     "@playwright/test": "^1.58.0",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/better-sqlite3": "^7.6.13",
@@ -36,5 +42,11 @@
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },
-  "pnpm": { "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp"] }
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp"
+    ]
+  }
 }

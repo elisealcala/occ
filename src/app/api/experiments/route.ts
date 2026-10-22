@@ -6,5 +6,7 @@ export async function POST(request: Request) {
   try {
     checkOrigin(request);
     return json(getRepository().create(experimentConfigSchema.parse(await readBody(request))), 201);
-  } catch (error) { return errorResponse(error); }
+  } catch (error) {
+    return errorResponse(error);
+  }
 }

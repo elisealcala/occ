@@ -11,5 +11,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const result = getRepository().mutate(id, input);
     await delay(input.responseDelayMs);
     return json(result, result.ok ? 200 : 409);
-  } catch (error) { return errorResponse(error); }
+  } catch (error) {
+    return errorResponse(error);
+  }
 }
