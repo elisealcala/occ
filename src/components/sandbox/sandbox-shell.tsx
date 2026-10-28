@@ -1,8 +1,68 @@
 'use client';
 
-import { Database, FlaskConical, GitBranch } from 'lucide-react';
+import { ArrowUpRight, Database, FlaskConical, GitBranch, Github, Moon, Sun } from 'lucide-react';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useSyncExternalStore } from 'react';
+
+const THEME_KEY = 'occ-sandbox-theme';
+let fallbackTheme: 'dark' | 'light' = 'dark';
+
+function getTheme(): 'dark' | 'light' {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : fallbackTheme;
+  } catch {
+    return fallbackTheme;
+  }
+}
+
+function subscribeTheme(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener('occ-theme-change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('occ-theme-change', callback);
+  };
+}
+
+function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribeTheme, getTheme, () => 'dark');
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  function toggleTheme() {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    fallbackTheme = nextTheme;
+    try {
+      localStorage.setItem(THEME_KEY, nextTheme);
+    } catch {
+      // The current tab still retains the selected theme when storage is unavailable.
+    }
+    window.dispatchEvent(new Event('occ-theme-change'));
+  }
+
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      role="switch"
+      aria-label="Dark mode"
+      aria-checked={theme === 'dark'}
+      onClick={toggleTheme}
+    >
+      {theme === 'dark' ? (
+        <Moon size={16} aria-hidden="true" />
+      ) : (
+        <Sun size={16} aria-hidden="true" />
+      )}
+      <span>Dark mode</span>
+      <span className="theme-toggle-state" aria-hidden="true">
+        {theme === 'dark' ? 'On' : 'Off'}
+      </span>
+    </button>
+  );
+}
 
 export function SandboxShell({ children }: { children: ReactNode }) {
   return (
@@ -22,6 +82,7 @@ export function SandboxShell({ children }: { children: ReactNode }) {
             <span />
             INTERACTIVE LAB
           </span>
+          <ThemeToggle />
           <span className="stack-label">
             Next.js <span>+</span> SQLite
           </span>
@@ -68,7 +129,17 @@ export function SandboxShell({ children }: { children: ReactNode }) {
           OCC Sandbox
         </span>
         <span>React drafts → version checks → persisted truth</span>
-        <span>Built to break. Designed to explain.</span>
+        <a
+          className="github-link"
+          href="https://github.com/elisealcala/occ"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Github size={16} aria-hidden="true" />
+          View on GitHub
+          <ArrowUpRight size={16} aria-hidden="true" />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
       </footer>
     </div>
   );
