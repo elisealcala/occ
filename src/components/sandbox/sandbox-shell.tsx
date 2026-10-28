@@ -20,7 +20,7 @@ export function SandboxShell({ children }: { children: ReactNode }) {
         <div className="topbar-meta">
           <span className="local-pill">
             <span />
-            LOCAL ENVIRONMENT
+            INTERACTIVE LAB
           </span>
           <span className="stack-label">
             Next.js <span>+</span> SQLite

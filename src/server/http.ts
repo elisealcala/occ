@@ -1,5 +1,5 @@
 import { ZodError } from 'zod';
-import { DatabaseError } from './database';
+import { DatabaseError } from './repository';
 
 export function json(data: unknown, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -12,7 +12,7 @@ export function errorResponse(error: unknown) {
   console.error('Sandbox request failed', error);
   return json(
     {
-      error: 'The local server could not complete this request. Your draft is still in the editor.',
+      error: 'The server could not complete this request. Your draft is still in the editor.',
     },
     500,
   );
@@ -22,8 +22,7 @@ export async function readBody(request: Request): Promise<unknown> {
   if (raw.length > 150_000) throw new DatabaseError('Request exceeds 150 KB', 413);
   return JSON.parse(raw);
 }
-// This local demo has no authentication; do not allow another website to write
-// through the browser to the loopback server.
+// The demo has no authentication; reject cross-origin browser writes.
 export function checkOrigin(request: Request) {
   const origin = request.headers.get('origin');
   if (!origin) return;
@@ -36,7 +35,7 @@ export function checkOrigin(request: Request) {
     const parsed = new URL(origin);
     allowed =
       ['http:', 'https:'].includes(parsed.protocol) &&
-      ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname) &&
+      parsed.protocol === new URL(request.url).protocol &&
       parsed.host === host &&
       request.headers.get('sec-fetch-site') !== 'cross-site';
   } catch {

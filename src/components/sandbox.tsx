@@ -82,7 +82,7 @@ export default function Sandbox() {
         !error && (
           <div className="loading-sandbox">
             <LoaderCircle className="spin" size={22} />
-            <p>Opening your local experiment…</p>
+            <p>Opening your experiment…</p>
           </div>
         )
       )}

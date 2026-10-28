@@ -10,7 +10,7 @@ When two editors save the same document, a stale request can overwrite someone e
 - **Backend:** validated HTTP requests, atomic revision checks, retry receipts that prevent duplicate commits, and conditional checkpoint restores.
 - **Engineering evidence:** real SQLite race tests, deterministic client-state tests, and browser workflows covering the complete request path.
 
-**Current status:** a working local demo. The public deployment and portfolio presentation work are tracked in the [portfolio roadmap](docs/portfolio-roadmap.md), with priorities, completion criteria, and the latest local verification baseline.
+**Current status:** runs locally with SQLite or on Cloudflare Workers with SQLite-backed Durable Objects. The [portfolio roadmap](docs/portfolio-roadmap.md) tracks further presentation and verification work.
 
 Start with [your first concurrency experiment](#your-first-concurrency-experiment), explore [how writes work](#how-writes-work), or review the [verification setup](#verification).
 
@@ -42,6 +42,23 @@ pnpm dev --port 3100
 ```
 
 Open [http://127.0.0.1:3100](http://127.0.0.1:3100). Stop the server with **Ctrl+C**. The app binds to loopback and is intended for local use.
+
+## Cloudflare Workers
+
+The Worker uses vinext and one SQLite-backed Durable Object per experiment. Its API keeps the same concurrency, checkpoint, and retry semantics as the local server. The local Next.js workflow still uses the local SQLite file; existing local data is not copied to Cloudflare.
+
+```sh
+pnpm check:worker
+pnpm dev:worker       # Local Workers runtime at http://127.0.0.1:8787
+pnpm test:worker      # Browser and HTTP scenarios against the local Worker
+pnpm build:worker
+pnpm exec wrangler login
+pnpm deploy:worker    # Build and deploy the Worker
+```
+
+Before deploying, verify that the Cloudflare account is on the **Workers Free** plan. Deployment does not upgrade the account. The free limits are shared with other Workers in the account, and exceeding a limit can interrupt the app until it resets. Both editors poll every second and the server observer polls every 750 ms, so open tabs consume the request allowance quickly. See [Cloudflare limits](https://developers.cloudflare.com/workers/platform/limits/) and [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/).
+
+Experiments, checkpoints, and events are automatically deleted 30 days after the last successful save; polling does not extend retention. A remembered expired experiment is replaced with a fresh one on reload. This public demo has no authentication: anyone who knows an experiment ID can access its contents, so do not enter sensitive data.
 
 ## Your first concurrency experiment
 
@@ -129,7 +146,7 @@ Checkpoints are immutable copies of the outgoing document at the start of a burs
 - `POST /api/experiments/:id/mutations`: `clientId`, `mutationId`, `expectedRevision`, either rich-text `content` or `restoreCheckpointId`, `checkpoint`, and optional request/response delays (0–5,000 ms).
 - Success: `{ ok: true, document }`. Conflict: HTTP 409 with `{ ok: false, reason: "conflict", document }`. Invalid input: 400; missing experiment/checkpoint: 404.
 
-Rich text is validated, bounded JSON and rendered through Tiptap rather than injected HTML. Cross-origin browser writes are rejected. This is a local teaching tool without authentication, not a public deployment template.
+Rich text is validated, bounded JSON and rendered through Tiptap rather than injected HTML. Cross-origin browser writes are rejected. This is a teaching tool without authentication; public experiment data is accessible to anyone with its ID.
 
 ## Relationship to the original work
 

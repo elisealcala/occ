@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "occ-sandbox",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-28",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": { "bindings": [{ "name": "EXPERIMENTS", "class_name": "Experiment" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Experiment"] }],
+  "observability": { "enabled": true }
+}

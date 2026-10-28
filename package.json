@@ -7,7 +7,7 @@
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build --webpack",
     "start": "next start --hostname 127.0.0.1",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "biome lint . --error-on-warnings && pnpm lint:next",
     "test": "vitest run",
     "test:e2e": "playwright test",
@@ -15,7 +15,14 @@
     "lint:fix": "biome lint --write . && eslint . --fix",
     "format": "biome check --write --linter-enabled=false .",
     "format:check": "biome check --linter-enabled=false --error-on-warnings .",
-    "check": "biome check . --error-on-warnings && pnpm lint:next && pnpm typecheck"
+    "check": "biome check . --error-on-warnings && pnpm lint:next && pnpm typecheck",
+    "check:worker": "vinext check",
+    "dev:worker": "vite dev --host 127.0.0.1 --port 8787",
+    "build:worker": "vite build",
+    "preview:worker": "vite preview --host 127.0.0.1 --port 8787",
+    "deploy:worker": "pnpm build:worker && wrangler deploy --config dist/server/wrangler.json",
+    "test:worker": "playwright test --config playwright.worker.config.ts",
+    "typecheck:worker": "tsc --noEmit -p tsconfig.worker.json"
   },
   "dependencies": {
     "@tiptap/pm": "^3.27.1",
@@ -24,23 +31,31 @@
     "better-sqlite3": "^12.0.0",
     "lucide-react": "^0.563.0",
     "next": "^16.3.4",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-server-dom-webpack": "19.3.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
+    "@cloudflare/vite-plugin": "^1.66.0",
+    "@cloudflare/workers-types": "^5.20261028.1",
     "@playwright/test": "^1.58.0",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vinext/cloudflare": "^1.3.0",
+    "@vitejs/plugin-rsc": "^0.5.38",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.3.4",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "vinext": "^1.4.0",
+    "vite": "^8.3.5",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.154.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -48,5 +63,6 @@
       "esbuild",
       "sharp"
     ]
-  }
+  },
+  "type": "module"
 }

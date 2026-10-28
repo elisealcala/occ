@@ -8,7 +8,7 @@ function localRequest(
   return new Request(url, { method: 'POST', headers });
 }
 
-describe('local write origin guard', () => {
+describe('same-origin write guard', () => {
   it('accepts a browser using 127.0.0.1 when Next internally constructs a localhost URL', () => {
     const request = localRequest({
       host: '127.0.0.1:3101',
@@ -29,12 +29,33 @@ describe('local write origin guard', () => {
     },
   );
 
+  it('accepts a matching deployed HTTPS origin', () => {
+    expect(() =>
+      checkOrigin(
+        localRequest(
+          { host: 'example.workers.dev', origin: 'https://example.workers.dev' },
+          'https://example.workers.dev/api/experiments',
+        ),
+      ),
+    ).not.toThrow();
+  });
+
+  it('rejects a scheme mismatch', () => {
+    expect(() =>
+      checkOrigin(
+        localRequest(
+          { host: 'example.workers.dev', origin: 'http://example.workers.dev' },
+          'https://example.workers.dev/api/experiments',
+        ),
+      ),
+    ).toThrow();
+  });
+
   it('uses the request URL authority when Host is unavailable', () => {
     expect(() => checkOrigin(localRequest({ origin: 'http://localhost:3101' }))).not.toThrow();
   });
 
   it.each([
-    { host: 'example.com:3101', origin: 'http://example.com:3101' },
     { host: '127.0.0.1:3101', origin: 'http://example.com:3101' },
     { host: '127.0.0.1:3101', origin: 'null' },
     { host: '127.0.0.1:3101', origin: 'not a URL' },
